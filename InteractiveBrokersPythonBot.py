@@ -85,9 +85,7 @@ class Bot:
         self.symbol = input("Enter the symbol you want to trade : ")
         #Get bar size
         self.barsize = int(input("Enter the barsize you want to trade in minutes : "))
-        mintext = " min"
-        if (int(self.barsize) > 1):
-            mintext = " mins"
+        mintext = " mins" if self.barsize > 1 else " min"
         queryTime = (datetime.now().astimezone(pytz.timezone("America/New_York"))-timedelta(days=1)).replace(hour=16,minute=0,second=0,microsecond=0).strftime("%Y%m%d %H:%M:%S")
         #Create our IB Contract Object
         contract = Contract()
@@ -137,8 +135,7 @@ class Bot:
         stopLossOrder.auxPrice = round(stopLoss,2)
         stopLossOrder.transmit = True
 
-        bracketOrders = [parent, profitTargetOrder, stopLossOrder]
-        return bracketOrders
+        return [parent, profitTargetOrder, stopLossOrder]
     #Pass realtime bar data back to our bot object
     def on_bar_update(self, reqId, bar,realtime):
         global orderId
@@ -160,7 +157,7 @@ class Bot:
                     closes.append(bar.close)
                 self.close_array = pd.Series(np.asarray(closes))
                 self.sma = ta.trend.sma(self.close_array,self.smaPeriod,True)
-                print("SMA : " + str(self.sma[len(self.sma)-1]))
+                print(f"SMA : {str(self.sma[len(self.sma)-1])}")
                 #2.) Calculate Higher Highs and Lows
                 lastLow = self.bars[len(self.bars)-1].low
                 lastHigh = self.bars[len(self.bars)-1].high
@@ -183,7 +180,7 @@ class Bot:
                     contract.currency = "USD"
                     #Place Bracket Order
                     for o in bracket:
-                        o.ocaGroup = "OCA_"+str(orderId)
+                        o.ocaGroup = f"OCA_{str(orderId)}"
                         self.ib.placeOrder(o.orderId,contract,o)
                     orderId += 3
                 #Bar closed append
